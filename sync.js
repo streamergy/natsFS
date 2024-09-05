@@ -13,6 +13,7 @@ parser.add_argument('-t', '--token', { help: 'NATS broker token' })
 parser.add_argument('-b', '--bucket', { help: 'NATS object bucket name' })
 parser.add_argument('-m', '--mount', { help: 'Folder to sync objects to' })
 parser.add_argument('-c', '--config', { help: 'Path to config file. CLI options override options from the file' })
+parser.add_argument('-1', '--once', { help: 'Only run sync once, don\'t listen for NATS updates' })
 
 let args = parser.parse_args();
 
@@ -160,6 +161,10 @@ async function syncAllFiles() {
 }
 
 await syncAllFiles();
+
+if(args.once){
+    process.exit(0);
+}
 
 const watch = await objectBucket.watch();
 for await(const update of watch){
