@@ -8,17 +8,31 @@ const parser = new ArgumentParser({
     // name: 'NATS Filesystem Sync',
     description: 'Sync objects from a NATS object store to your filesystem'
 });
-parser.add_argument('-u', '--host', { help: 'NATS broker host. Default "localhost:4222"', default: 'localhost:4222' })
+parser.add_argument('-u', '--host', { help: 'NATS broker host. Default "localhost:4222"'})
 parser.add_argument('-t', '--token', { help: 'NATS broker token' })
-parser.add_argument('-b', '--bucket', { help: 'NATS object bucket name', required: true })
-parser.add_argument('-m', '--mount', { help: 'Folder to sync objects to', required: true })
+parser.add_argument('-b', '--bucket', { help: 'NATS object bucket name' })
+parser.add_argument('-m', '--mount', { help: 'Folder to sync objects to' })
 parser.add_argument('-c', '--config', { help: 'Path to config file. CLI options override options from the file' })
 
-const args = parser.parse_args();
+let args = parser.parse_args();
 
 if(args.config){
     const config = JSON.parse(fs.readFileSync(args.config));
-    args = {...config, ...args};
+    // undefined vars from args override
+    for(const key in config){
+        if(args[key] === undefined){
+            args[key] = config[key];
+        }
+    }
+}
+
+if((!args.bucket) || (!args.mount)) {
+    console.log('sync.js: error: the following arguments are required: -b/--bucket, -m/--mount');
+    process.exit(1);
+}
+
+if(!args.host){
+    args.host = 'localhost:4222';
 }
 
 const connection = await nats.connect({ servers: args.host, token: args.token });

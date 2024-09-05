@@ -1,0 +1,6 @@
+{
+    "host": "localhost:42223",
+    "token": "1234567890",
+    "bucket": "fs",
+    "mount": "mnt/"
+}
