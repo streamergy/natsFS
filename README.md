@@ -1,7 +1,7 @@
-# NATSfs
+# natsFS
 
 This project allows you to synchronize an object store from NATS into your filesystem.
-It listens for changes in NATS, any updates local files live.
+It listens for changes in NATS and updates local files live.
 
 ## Usage
 
