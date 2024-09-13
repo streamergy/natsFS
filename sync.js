@@ -40,8 +40,6 @@ const connection = await nats.connect({ servers: args.host, token: args.token })
 const jetStream = connection.jetstream();
 const objectBucket = await jetStream.views.os('fs');
 
-process.chdir('mnt');
-
 const slashReplace = /^\/*/g;
 
 async function pipeStream(readStream, writableStream) {
