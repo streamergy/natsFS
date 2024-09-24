@@ -166,5 +166,8 @@ if(args.once){
 
 const watch = await objectBucket.watch();
 for await(const update of watch){
+    if(!update) {
+        continue;
+    }
     await syncFile(update.name, update);
 }
