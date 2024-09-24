@@ -36,9 +36,11 @@ if(!args.host){
     args.host = 'localhost:4222';
 }
 
+process.chdir(args.mount);
+
 const connection = await nats.connect({ servers: args.host, token: args.token });
 const jetStream = connection.jetstream();
-const objectBucket = await jetStream.views.os('fs');
+const objectBucket = await jetStream.views.os(args.bucket);
 
 const slashReplace = /^\/*/g;
 
@@ -92,13 +94,13 @@ async function downloadFile(path){
         fs.mkdirSync(currentPath);
     }
 
-    const natsHandle = await objectBucket.get(`/${path}`);
+    const natsHandle = await objectBucket.get(path);
     return await pipeStream(natsHandle.data, fs.createWriteStream(path));
 }
 
 async function getHash(path, algorithm) {
     return new Promise((resolve, reject) => {
-        const hash = crypto.createHash(algorithm);
+        const hash = crypto.createHash(algorithm.replace('-', ''));
         const rs = fs.createReadStream(path);
         rs.on('error', reject);
         rs.on('data', chunk => hash.update(chunk));
@@ -112,8 +114,6 @@ async function syncFile(path, data){
     if(data === undefined){
         data = await objectBucket.info(path);
     }
-
-    path = path.substring(1);
 
     if (data.deleted) {
         process.stdout.write(`${path}: deleting file...`);
