@@ -14,8 +14,11 @@ parser.add_argument('-b', '--bucket', { help: 'NATS object bucket name' })
 parser.add_argument('-m', '--mount', { help: 'Folder to sync objects to' })
 parser.add_argument('-c', '--config', { help: 'Path to config file. CLI options override options from the file' })
 parser.add_argument('-1', '--once', { help: 'Only run sync once, don\'t listen for NATS updates' })
+parser.add_argument('-to', '--timeout', { help: 'Timeout for readStream after x ms (default: 10000 = 10s)'})
 
 let args = parser.parse_args();
+
+const timeout = args.timeout ?? 10000;
 
 if(args.config){
     const config = JSON.parse(fs.readFileSync(args.config));
@@ -48,6 +51,11 @@ async function pipeStream(readStream, writableStream) {
     const reader = readStream.getReader();
 
     return await new Promise((resolve, reject) => {
+        setTimeout(()=> {
+            reject();
+            return;
+        }, timeout)
+
         let totalSize = 0;
         reader.read().then(function processText({ done, value }) {
             if(done){
@@ -74,6 +82,7 @@ async function callFsFunction(fnct, ...args) {
 
 async function downloadFile(path){
     path = path.replace(slashReplace, '');
+    const tmpPath = path + '.download';
     
     const parts = path.split('/');
 
@@ -95,7 +104,11 @@ async function downloadFile(path){
     }
 
     const natsHandle = await objectBucket.get(path);
-    return await pipeStream(natsHandle.data, fs.createWriteStream(path));
+    const size = await pipeStream(natsHandle.data, fs.createWriteStream(tmpPath));
+    
+    fs.rename(tmpPath, path, () => {});
+
+    return size;
 }
 
 async function getHash(path, algorithm) {
@@ -147,26 +160,30 @@ async function syncFile(path, data){
     }
 
     process.stdout.write(`${path}: downloading file...`);
-    const size = await downloadFile(path);
-    console.log(`done (${size}B)`)
+    try {
+        const size = await downloadFile(path);
+        console.log(`done (${size}B)`)
+    } catch (_e) {
+        console.log('Error while syncing, leaving local file unmodified.')
+    }
 }
 
 async function syncAllFiles() {
     const files = await objectBucket.list();
-    for(const object of files){
+    for (const object of files) {
         await syncFile(object.name, object);
     }
 }
 
 await syncAllFiles();
 
-if(args.once){
+if (args.once) {
     process.exit(0);
 }
 
 const watch = await objectBucket.watch();
-for await(const update of watch){
-    if(!update) {
+for await(const update of watch) {
+    if (!update) {
         continue;
     }
     await syncFile(update.name, update);
