@@ -21,6 +21,8 @@ optional arguments:
                         Folder to sync objects to
   -c CONFIG, --config CONFIG
                         Path to config file. CLI options override options from the file
+  -to TIMEOUT_MS, --timeout TIMEOUT_MS
+                        Timeout for readStream after x ms (default: 10000 = 10s)
 ```
 
 Example invocation:
