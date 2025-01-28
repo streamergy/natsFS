@@ -14,7 +14,7 @@ parser.add_argument('-b', '--bucket', { help: 'NATS object bucket name' })
 parser.add_argument('-m', '--mount', { help: 'Folder to sync objects to' })
 parser.add_argument('-c', '--config', { help: 'Path to config file. CLI options override options from the file' })
 parser.add_argument('-1', '--once', { help: 'Only run sync once, don\'t listen for NATS updates' })
-parser.add_argument('--timeout', { help: 'Timeout for readStream after x ms (default: 10000 = 10s)', type: 'int', defaultValue: 10000 })
+parser.add_argument('--timeout', { help: 'Timeout for readStream after x ms (default: 10000 = 10s)', type: 'int', default: 10000 })
 
 let args = parser.parse_args();
 
