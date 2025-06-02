@@ -52,10 +52,18 @@ async function pipeStream(readStream, writableStream) {
         setTimeout(reject, args.timeout);
 
         let totalSize = 0;
+
+        writableStream.on('finish', () => {
+            resolve(totalSize);
+        })
+
+        writableStream.on('error', (err) => {
+            reject(err);
+        });
+
         reader.read().then(function processText({ done, value }) {
             if(done){
                 writableStream.end();
-                resolve(totalSize);
                 return;
             }
 
